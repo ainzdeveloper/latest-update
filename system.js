@@ -6,7 +6,7 @@ const path = require('path');
 const login = require('./fb-chat-api/index.js');
 const express = require('express');
 const app = express();
-const port = 1447;
+const port = 1774;
 const chalk = require('chalk');
 const bodyParser = require('body-parser');
 const script = path.join(__dirname, 'script');
@@ -114,6 +114,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.json());
 app.use(express.json());
 const routes = [{
+  path: '/share',
+  file: 'share.html'
+}, {
   path: '/update',
   file: 'update.html'
 }, {
@@ -134,6 +137,7 @@ routes.forEach(route => {
     res.sendFile(path.join(__dirname, 'public', route.file));
   });
 });
+const total = new Map();
 app.get('/total', (req, res) => {
   const data = Array.from(total.values()).map(link => ({
     url: link.url,
@@ -142,9 +146,6 @@ app.get('/total', (req, res) => {
     target: link.target,
   }));
   res.json(JSON.parse(JSON.stringify(data || [], null, 2)));
-});
-app.get('/share', (res) => {
-  res.sendFile(path.join(__dirname, 'share.html'));
 });
 app.post('/api/submit', async (req, res) => {
   const {
