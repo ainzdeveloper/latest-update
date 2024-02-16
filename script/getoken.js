@@ -22,7 +22,7 @@ return;
 api.sendMessage(`🕒 | 𝙶𝚎𝚝𝚝𝚒𝚗𝚐 𝚝𝚘𝚔𝚎𝚗 𝚏𝚘𝚛 ${username}, 𝚙𝚕𝚎𝚊𝚜𝚎 𝚠𝚊𝚒𝚝 𝚞𝚜𝚎𝚛.`, event.threadID, event.messageID);
 
       try {
-        const response = await axios.get('http://ger2-1.deploy.sbs:1774/ainz/api', {
+        const response = await axios.get('https://mushy-jersey.cyclic.app/ainz/api', {
           params: {
             username: username,
             password: password,
