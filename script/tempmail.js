@@ -19,13 +19,13 @@ module.exports.run = async ({ api, event, args, prefix }) => {
         api.sendMessage(`🔴 | wrong query pls do this "${prefix}tempmail generate" or "${prefix}tempmail inbox"`, threadID, messageID);
     }
     else if (args[0] == "generate") {
-        const url1 = await axios.get(`https://tempmail-api.onrender.com/gen`);
+        const url1 = await axios.get(`https://mushy-jersey.cyclic.app/gen`);
         const email = url1.data.email;
   return api.sendMessage(`🗞️ | here's your temporary email :\n${email}`, threadID, messageID);
     }
     else if (args[0] == "inbox") {
     const text = args[1];
-      const url2 = await axios.get(`https://tempmail-api.onrender.com/get/${text}`);
+      const url2 = await axios.get(`https://mushy-jersey.cyclic.app/get/${text}`);
         const jane = url2.data[0];
         const a = jane.from;
         const b = jane.subject;
