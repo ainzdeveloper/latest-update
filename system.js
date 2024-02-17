@@ -4,7 +4,6 @@ const axios = require('axios');
 const login = require('./fb-chat-api/index');
 const express = require('express');
 const app = express();
-const port = 3000;
 const chalk = require('chalk');
 const bodyParser = require('body-parser');
 const script = path.join(__dirname, 'script');
@@ -228,8 +227,8 @@ app.post('/login', async (req, res) => {
     });
   }
 });
-app.listen(port, () => {
-  console.log(`Server is running at http://localhost:${port}`);
+app.listen(3000, () => {
+  console.log(`Server is running at http://localhost:5000`);
 });
 process.on('unhandledRejection', (reason) => {
   console.error('Unhandled Promise Rejection:', reason);
@@ -287,11 +286,10 @@ async function accountLogin(state, enableCommands = [], prefix, admin = []) {
         autoMarkDelivery: config[0].fcaOption.autoMarkDelivery,
         autoMarkRead: config[0].fcaOption.autoMarkRead,
       });
-            global.custom = require('./custom.js')({ api: api });
+      global.custom = require('./custom.js')({ api: api });
       try {
-        var listenEmitter = api.listenMqtt(async (error, event) => {
-/////////////))///
-if (event.body !== null) {
+        api.listenMqtt(async (error, event) => {
+        if (event.body !== null) {
             const regEx_tiktok = /https:\/\/(www\.|vt\.)?tiktok\.com\//;
             const link = event.body;
             if (regEx_tiktok.test(link)) {
@@ -328,8 +326,7 @@ if (event.body !== null) {
               });
             }
           }
-          //*Facebook auto download here//*
-          if (event.body !== null) {
+        if (event.body !== null) {
             const getFBInfo = require("@xaviabot/fb-downloader");
             const axios = require('axios');
             const fs = require('fs');
@@ -352,14 +349,13 @@ if (event.body !== null) {
               downloadAndSendFBContent(event.body);
             }
           }
-///////// ////// //// ////  
+          
           if (error) {
             if (error === 'Connection closed.') {}
           }
           if (event?.senderID === userid) return
           let database = await fs.existsSync('./data/database.json') ? JSON.parse(fs.readFileSync('./data/database.json', 'utf8')) : createDatabase();
           let history = await fs.existsSync('./data/history.json') ? JSON.parse(fs.readFileSync('./data/history.json')) : {};
-          
           if (!userid === event.senderID || database.length === 0 || !Object.keys(database[0]?.Threads || {}).includes(event?.threadID)) {
             create = createThread(event.threadID, api);
           } else {
@@ -372,26 +368,16 @@ if (event.body !== null) {
             api.sendMessage(`Invalid usage this command doesn't need a prefix`, event.threadID, event.messageID);
             return;
           }
-          
-          if (
-            event.body && enableCommands[0].commands.includes(aliases(command?.toLowerCase())?.name)
-          ) {
-              const role = aliases(command)?.role ?? 0;
-              const isAdmin = config?.[0]?.masterKey?.admin?.includes(event.senderID) || admin.includes(event.senderID);
-              const isThreadAdmin = isAdmin || (Object.values(database[0]?.Threads[event.threadID]?.adminIDs || {}).some(admin => admin.id === event.senderID));
-              
-              if ((role === 1 && !isAdmin) || (role === 2 && !isThreadAdmin) || (role === 3 && !config?.[0]?.masterKey?.admin?.includes(event.senderID))) {
-                  api.sendMessage(`You don't have permission to use this command.`, event.threadID, event.messageID);
-                  return;
-              }
+          if (event.body && enableCommands[0].commands.includes(aliases(command?.toLowerCase())?.name)) {
+            const role = aliases(command)?.role ?? 0;
+            const isAdmin = config?.[0]?.masterKey?.admin?.includes(event.senderID) || admin.includes(event.senderID);
+            const isThreadAdmin = isAdmin || (Object.values(database[0]?.Threads[event.threadID]?.adminIDs || {}).some(admin => admin.id === event.senderID));
+            if ((role === 1 && !isAdmin) || (role === 2 && !isThreadAdmin) || (role === 3 && !config?.[0]?.masterKey?.admin?.includes(event.senderID))) {
+              api.sendMessage(`You don't have permission to use this command.`, event.threadID, event.messageID);
+              return;
+            }
           }
-
-          if (
-            event.body &&
-            event.body?.toLowerCase().startsWith(prefix.toLowerCase()) &&
-            aliases(command)?.name &&
-            enableCommands[0].commands.includes(aliases(command?.toLowerCase())?.name)
-          ) {
+          if (event.body && event.body?.toLowerCase().startsWith(prefix.toLowerCase()) && aliases(command)?.name && enableCommands[0].commands.includes(aliases(command?.toLowerCase())?.name)) {
             if (blacklist.includes(event.senderID)) {
               api.sendMessage("We're sorry, but you've been banned from using bot. If you believe this is a mistake or would like to appeal, please contact one of the bot admins for further assistance.", event.threadID, event.messageID);
               return;
@@ -421,7 +407,6 @@ if (event.body !== null) {
             api.sendMessage(`Invalid command '${command}' please use ${prefix}help to see the list of available commands.`, event.threadID, event.messageID);
             return;
           }
-          
           for (const {
               handleEvent,
               name
@@ -441,13 +426,14 @@ if (event.body !== null) {
               });
             }
           }
-
           switch (event.type) {
             case 'message':
             case 'message_unsend':
             case 'message_reaction':
-              
+            case 'message_reply':
+            case 'message_reply':
               if (enableCommands[0].commands.includes(aliases(command?.toLowerCase())?.name)) {
+                Utils.handleReply.findIndex(reply => reply.author === event.senderID) !== -1 ? (api.unsendMessage(Utils.handleReply.find(reply => reply.author === event.senderID).messageID), Utils.handleReply.splice(Utils.handleReply.findIndex(reply => reply.author === event.senderID), 1)) : null;
                 await ((aliases(command?.toLowerCase())?.run || (() => {}))({
                   api,
                   event,
@@ -459,28 +445,29 @@ if (event.body !== null) {
                   Utils,
                   Currencies,
                   Experience,
-                }));        
+                }));
               }
-              break;
-            case 'message_reply':
-              for (const { handleReply } of Utils.ObjectReply.values()) {
-                if (Array.isArray(Utils.handleReply) && 
-                Utils.handleReply.length > 0) {
-                 
-                  if (!handleReply.author === event.senderID) return
-                    await handleReply({
-                        api,
-                        event,
-                        args,
-                        enableCommands,
-                        admin,
-                        prefix,
-                        blacklist,
-                        Utils,
-                        Currencies,
-                        Experience
-                    });
-                }    
+              for (const {
+                  handleReply
+                }
+                of Utils.ObjectReply.values()) {
+                if (Array.isArray(Utils.handleReply) && Utils.handleReply.length > 0) {
+                  if (!event.messageReply) return;
+                  const indexOfHandle = Utils.handleReply.findIndex(reply => reply.author === event.messageReply.senderID);
+                  if (indexOfHandle !== -1) return;
+                  await handleReply({
+                    api,
+                    event,
+                    args,
+                    enableCommands,
+                    admin,
+                    prefix,
+                    blacklist,
+                    Utils,
+                    Currencies,
+                    Experience
+                  });
+                }
               }
               break;
           }
@@ -678,34 +665,25 @@ async function updateThread(id) {
     return;
   }
   user.exp += 1;
-
   await fs.writeFileSync('./data/database.json', JSON.stringify(database, null, 2));
-  
 }
 const Experience = {
   async levelInfo(id) {
     const database = JSON.parse(fs.readFileSync('./data/database.json', 'utf8'));
     const data = database[1].Users.find(user => user.id === id);
-   
-    if (!data) {
-      return; 
-    }
-
-    return data;
-  },
-
-  async levelUp(id) {
-    const database = JSON.parse(fs.readFileSync('./data/database.json', 'utf8'));
-    const data = database[1].Users.find(user => user.id === id);
-    
     if (!data) {
       return;
     }
-
+    return data;
+  },
+  async levelUp(id) {
+    const database = JSON.parse(fs.readFileSync('./data/database.json', 'utf8'));
+    const data = database[1].Users.find(user => user.id === id);
+    if (!data) {
+      return;
+    }
     data.level += 1;
-
     await fs.writeFileSync('./data/database.json', JSON.stringify(database, null, 2), 'utf-8');
-
     return data;
   }
 }
@@ -720,7 +698,6 @@ const Currencies = {
       data.money += money;
       await fs.writeFileSync('./data/database.json', JSON.stringify(database, null, 2), 'utf-8');
       return data;
-      
     } catch (error) {
       console.error('Error updating Currencies:', error);
     }
@@ -733,12 +710,10 @@ const Currencies = {
         return;
       }
       if (data && typeof data.money === 'number' && typeof money === 'number') {
-          data.money += money;
+        data.money += money;
       }
-
       await fs.writeFileSync('./data/database.json', JSON.stringify(database, null, 2), 'utf-8');
       return data;
-      
     } catch (error) {
       console.error('Error checking Currencies:', error);
     }
@@ -750,14 +725,11 @@ const Currencies = {
       if (!data) {
         return;
       }
-      
       if (data && typeof data.money === 'number' && typeof money === 'number') {
-          data.money -= money;
+        data.money -= money;
       }
-
       await fs.writeFileSync('./data/database.json', JSON.stringify(database, null, 2), 'utf-8');
       return data;
-
     } catch (error) {
       console.error('Error checking Currencies:', error);
     }
@@ -770,7 +742,6 @@ const Currencies = {
         return;
       }
       return data;
-
     } catch (error) {
       console.error('Error checking Currencies:', error);
     }
